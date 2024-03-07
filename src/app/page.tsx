@@ -1,22 +1,37 @@
 import fs from "fs";
 import Link from "next/link";
+import matter from "gray-matter";
+import { Post } from "@/lib/types";
 
-const getPostMetadata = () => {
+const getPostMetadata = (): Post[] => {
   const folder = "posts/";
   const files = fs.readdirSync(folder);
   const markdownPosts = files.filter((file) => file.endsWith(".md"));
-  const slug = markdownPosts.map((file) => file.replace(".md", ""));
-  return slug;
+
+  const posts = markdownPosts.map((fileName) => {
+    const fileContents = fs.readFileSync(`posts/${fileName}`, "utf8");
+    const matterResolt = matter(fileContents);
+    return {
+      title: matterResolt.data.title,
+      date: matterResolt.data.date,
+      subtitle: matterResolt.data.subtitle,
+      slug: fileName.replace(".md", ""),
+    };
+  });
+  return posts;
 };
 
 export default function Home() {
   const metadata = getPostMetadata();
   const preveuMetadata = metadata.map((slug) => {
+    const formattedDate = new Date(slug.date).toLocaleDateString();
     return (
-      <div key={slug}>
-        <Link href={`/posts/${slug}`}>
-          <h2>{slug}</h2>
+      <div key={slug.title}>
+        <Link href={`/posts/${slug.title}`}>
+          <h2>{slug.title}</h2>
         </Link>
+        <p>{slug.slug}</p>
+        <p>{formattedDate}</p>
       </div>
     );
   });
